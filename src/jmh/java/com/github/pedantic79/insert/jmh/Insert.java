@@ -1,4 +1,4 @@
-package com.github.pedantic79.insert.jhm;
+package com.github.pedantic79.insert.jmh;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
