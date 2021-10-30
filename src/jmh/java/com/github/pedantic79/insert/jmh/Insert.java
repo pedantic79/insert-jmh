@@ -3,7 +3,6 @@ package com.github.pedantic79.insert.jmh;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
@@ -13,23 +12,29 @@ import org.openjdk.jmh.infra.Blackhole;
 @Warmup(iterations = 1, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 1, time = 1, timeUnit = TimeUnit.SECONDS)
 public class Insert {
-  static void insert(int numbers[], List<Integer> input, Blackhole blackhole) {
-    for (int i = 0; i < numbers.length; i++) {
-      ListIterator<Integer> litr = input.listIterator();
+  // We pass input as a type to allow us to be generic. In other languages we
+  // might try to be generic over 'T extends List<Integer>', but that doesn't
+  // work because in Java we aren't allowed to instantiate a new T without
+  // jumping through reflection hoops.
+  static void insert(int numbers[], List<Integer> inputList, Blackhole blackhole) {
+    for (int num : numbers) {
+      var litr = inputList.listIterator();
       while (litr.hasNext()) {
-        if (litr.next() > numbers[i]) {
-          // Since we've gone past the position where we want to insert
-          // we have to move back one
+        // Java Collections has no 'peek()' method, so when we call 'next()',
+        // it will advance to the iterator. So we will call 'previous()'
+        // before breaking to simulate the 'peek()'
+        if (litr.next() > num) {
           litr.previous();
           break;
         }
       }
 
-      litr.add(numbers[i]);
+      litr.add(num);
     }
 
-    // guarantee the optimizer won't consider everything a no-op
-    blackhole.consume(input);
+    // guarantee the optimizer won't consider everything a no-op and optimize
+    // away everything.
+    blackhole.consume(inputList);
   }
 
   static final int random[] = {
